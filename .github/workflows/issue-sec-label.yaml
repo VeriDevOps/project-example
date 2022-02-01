@@ -1,0 +1,46 @@
+name: "Determine Security Requirement"
+
+on:
+  issues:
+    types: [opened, reopened, edited]
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  get_info:
+    name: "Get Issue Information"
+    runs-on: ubuntu-latest
+    outputs:
+      issue_title: ${{ steps.issue_title.outputs.issue_title }}
+      issue_body: ${{ steps.issue_body.outputs.issue_body }}
+    steps:
+      - name: Get issue title
+        id: issue_title
+        run: echo "::set-output name=issue_title::${{ github.event.issue.title }}"
+
+      - name: Get issue body
+        id: issue_body
+        run: echo "::set-output name=issue_body::${{ github.event.issue.body }}"
+
+  arqan_label:
+    name: "Security Issue Or Not?"
+    needs: get_info
+    runs-on: ubuntu-latest
+    outputs:
+      issue_label: security
+    steps:
+      - name: Make Api Call to ARQAN Model
+        run: echo ${{needs.get_info.outputs.issue_title}} - ${{needs.get_info.outputs.issue_body}}
+  
+  set_label:
+    name: "Label the issue"
+    needs: arqan_label
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-ecosystem/action-add-labels@v1
+        if: ${{needs.arqan_label.outputs.issue_label}} == "security"
+        with:
+          labels: security
