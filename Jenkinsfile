@@ -5,6 +5,7 @@ pipeline  {
         stage('Build') {
             steps {
                 echo 'Building..'
+                echo sh(returnStdout: true, script: 'env')
             }
         }
         stage('Test') {
