@@ -1,7 +1,8 @@
 /*
  * curl -X POST -H "Content-Type: application/json" -H "headerWithNumber: nbr123" -H "headerWithString: a b c" -d '{ "before": "1848f12", "after": "5cab1", "ref": "refs/heads/develop" }' -vs http://admin:admin@localhost:8080/jenkins/generic-webhook-trigger/invoke?requestWithNumber=nbr%20123\&requestWithString=a%20string
  */
-node {
+pipeline {
+ agent any
  properties([
   pipelineTriggers([
    [$class: 'GenericTrigger',
@@ -16,7 +17,7 @@ node {
    ]
   ])
  ])
-
+ stages {
  stage("Set label to security-related GitHub issue") {
   when {
       and {
@@ -45,4 +46,5 @@ node {
     println("issue_body:  $issue_body")
   }
  }
+}
 }
