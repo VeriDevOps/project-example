@@ -30,8 +30,8 @@ if(issue_url != 'not_an_issue' && action ==~ /(opened|reopened|edited)/) {
 
  stage("Perform an API request to ARQAN with bodu and title") {
      script {
-        final String response_body = sh(script: "curl -X POST -H 'Content-Type: text/plain' --data $'$issue_body' 51.178.12.108:8000/text", returnStdout: true).trim()
-        final String response_title = sh(script: "curl -X POST -H 'Content-Type: text/plain' --data $'$issue_title' 51.178.12.108:8000/text", returnStdout: true).trim()
+        final String response_body = sh(script: "curl -X POST -H 'Content-Type: text/plain' --data \$'$issue_body' 51.178.12.108:8000/text", returnStdout: true).trim()
+        final String response_title = sh(script: "curl -X POST -H 'Content-Type: text/plain' --data \$'$issue_title' 51.178.12.108:8000/text", returnStdout: true).trim()
      }
  }
 
@@ -51,7 +51,7 @@ if(issue_url != 'not_an_issue' && action ==~ /(opened|reopened|edited)/) {
   stage("Set tag") {
       script {
           final String response = sh(script: "curl -X POST -H 'Accept: application/vnd.github.v3+json' https://api.github.com/repos/VeriDevOps/project-example/issues/2/labels -d '{\"labels\" : [$issue_label]}'")
-          echo $response
+          println(response)
       }
   }
 }
