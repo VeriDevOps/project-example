@@ -29,11 +29,14 @@ if(issue_url != 'not_an_issue' && action ==~ /(opened|reopened|edited)/) {
     final String response_title = sh(script: "curl -X POST -H 'Content-Type: text/plain' --data \$'$issue_title' 51.178.12.108:8000/text", returnStdout: true).trim()
 
     def responseObject_body = readJSON text: response_body
-    def responseObject_title = readJSON text: response_title
-    def security_text_title = "$responseObject_title.security_text"
+    // def responseObject_title = readJSON text: response_title
+    // def security_text_title = "$responseObject_title.security_text"
     def security_text_body = "$responseObject_body.security_text"
     def issue_label = "Security JENKINS"
-    if (security_text_body == [] && security_text_title == []){
+    // if (security_text_body == [] && security_text_title == []){
+    //     issue_label = "Non-security JENKINS"
+    // }
+    if (security_text_body == []) {
         issue_label = "Non-security JENKINS"
     }
 
