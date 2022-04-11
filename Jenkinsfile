@@ -6,13 +6,11 @@ node {
   pipelineTriggers([
    [$class: 'GenericTrigger',
     genericVariables: [
-     [key: 'reference', value: '$.ref'],
+     [key: 'action', value: '$.action'],
      [
-      key: 'before',
-      value: '$.before',
-      expressionType: 'JSONPath', //Optional, defaults to JSONPath
-      regexpFilter: '', //Optional, defaults to empty string
-      defaultValue: '' //Optional, defaults to empty string
+      key: 'is_issue',
+      value: '$.issue',
+      defaultValue: 'not_an_issue'
      ]
     ],
     genericRequestVariables: [
@@ -35,8 +33,8 @@ node {
  stage("build") {
   sh '''
   echo Variables from shell:
-  echo reference $reference
-  echo before $before
+  echo action $action
+  echo is_issue $is_issue
   echo requestWithNumber $requestWithNumber
   echo requestWithString $requestWithString
   echo headerWithNumber $headerWithNumber
