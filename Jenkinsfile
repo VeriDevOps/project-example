@@ -25,34 +25,21 @@ if(issue_url != 'not_an_issue' && action ==~ /(opened|reopened|edited)/) {
     def issue_body = "$responseObject.body"
     println("issue_title:  $issue_title")
     println("issue_body:  $issue_body")
-  }
- }
+    final String response_body = sh(script: "curl -X POST -H 'Content-Type: text/plain' --data \$'$issue_body' 51.178.12.108:8000/text", returnStdout: true).trim()
+    final String response_title = sh(script: "curl -X POST -H 'Content-Type: text/plain' --data \$'$issue_title' 51.178.12.108:8000/text", returnStdout: true).trim()
 
- stage("Perform an API request to ARQAN with bodu and title") {
-     script {
-        final String response_body = sh(script: "curl -X POST -H 'Content-Type: text/plain' --data \$'$issue_body' 51.178.12.108:8000/text", returnStdout: true).trim()
-        final String response_title = sh(script: "curl -X POST -H 'Content-Type: text/plain' --data \$'$issue_title' 51.178.12.108:8000/text", returnStdout: true).trim()
-     }
- }
+    def responseObject_body = readJSON text: response_body
+    def responseObject_title = readJSON text: response_title
+    def security_text_title = "$responseObject_title.security_text"
+    def security_text_body = "$responseObject_body.security_text"
+    def issue_label = "Security JENKINS"
+    if (security_text_body == [] && security_text_title == []){
+        issue_label = "Non-security JENKINS"
+    }
 
- stage("Define a tag") {
-     script {
-        def responseObject_body = readJSON text: response_body
-        def responseObject_title = readJSON text: response_title
-        def security_text_title = "$responseObject_title.security_text"
-        def security_text_body = "$responseObject_body.security_text"
-        def issue_label = "Security JENKINS"
-        if (security_text_body == [] && security_text_title == []){
-            issue_label = "Non-security JENKINS"
-        }
-     }
- }
-
-  stage("Set tag") {
-      script {
-          final String response = sh(script: "curl -X POST -H 'Accept: application/vnd.github.v3+json' https://api.github.com/repos/VeriDevOps/project-example/issues/2/labels -d '{\"labels\" : [$issue_label]}'")
-          println(response)
-      }
-  }
+    final String response_label = sh(script: "curl -X POST -H 'Accept: application/vnd.github.v3+json' https://api.github.com/repos/VeriDevOps/project-example/issues/2/labels -d '{\"labels\" : [$issue_label]}'")
+    println(response_label)
+}
+}
 }
 }
