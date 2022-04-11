@@ -8,38 +8,41 @@ node {
     genericVariables: [
      [key: 'action', value: '$.action'],
      [
-      key: 'is_issue',
+      key: 'issue_url',
       value: '$.issue.url',
       defaultValue: 'not_an_issue'
      ]
-    ],
-    genericRequestVariables: [
-     [key: 'requestWithNumber', regexpFilter: '[^0-9]'],
-     [key: 'requestWithString', regexpFilter: '']
-    ],
-    genericHeaderVariables: [
-     [key: 'headerWithNumber', regexpFilter: '[^0-9]'],
-     [key: 'headerWithString', regexpFilter: ''],
-     [key: 'X-GitHub-Event', regexpFilter: '']
-    ],
-    printContributedVariables: true,
-    printPostContent: true,
-    regexpFilterText: '',
-    regexpFilterExpression: ''
+    ]
    ]
   ])
  ])
 
- stage("build") {
-  sh '''
-  echo Variables from shell:
-  echo action $action
-  echo is_issue $is_issue
-  echo requestWithNumber $requestWithNumber
-  echo requestWithString $requestWithString
-  echo headerWithNumber $headerWithNumber
-  echo headerWithString $headerWithString
-  echo X_GitHub_Event $X_GitHub_Event
-  '''
+ stage("Set label to security-related GitHub issue") {
+  when {
+      and {
+        expression {
+            issue_url != 'not_an_issue';
+        }
+        or {
+          expression {
+            action == 'opened';
+          }
+          expression {
+            action == 'reopened';
+          }
+          expression {
+            action == 'edited';
+          }
+        }
+      }
+    }
+  script {
+    final String response = sh(script: "curl -s $issue_url", returnStdout: true).trim()
+    def responseObject = readJSON text: response
+    def issue_title = "$responseObject.title"
+    def issue_body = "$responseObject.body"
+    println("issue_title:  $issue_title")
+    println("issue_body:  $issue_body")
+  }
  }
 }
