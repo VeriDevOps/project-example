@@ -39,9 +39,10 @@ if(issue_url != 'not_an_issue' && action ==~ /(opened|reopened|edited)/) {
     if (security_text_body == []) {
         issue_label = "Non-security JENKINS"
     }
-
-    final String response_label = sh(script: "curl -X POST -H 'Accept: application/vnd.github.v3+json' https://api.github.com/repos/VeriDevOps/project-example/issues/2/labels -d '{\"labels\" : [$issue_label]}'")
-    println(response_label)
+    withCredentials([string(credentialsId: 'personal-token-github', variable: 'TOKEN')]) {
+        final String response_label = sh(script: "curl -X POST -H 'Accept: application/vnd.github.v3+json' -H \"authToken: $TOKEN\" https://api.github.com/repos/VeriDevOps/project-example/issues/2/labels -d '{\"labels\" : [$issue_label]}'")
+        println(response_label)
+    }
 }
 }
 }
