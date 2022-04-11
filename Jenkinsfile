@@ -9,7 +9,7 @@ node {
      [key: 'action', value: '$.action'],
      [
       key: 'is_issue',
-      value: '$.issue',
+      value: '$.issue.url',
       defaultValue: 'not_an_issue'
      ]
     ],
