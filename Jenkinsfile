@@ -96,6 +96,13 @@ String ArqanClassificationApi (String textInput) {
             println(response.content.getClass())
             return null
         }
+        
+        def string = '{"security_text":[]}'
+        println(string)
+        println(string.getClass())
+        def testResponse = new groovy.json.JsonSlurper().parseText(string)
+        println(testResponse + "\n" + testResponse["security_text"])
+
         println(response.content)
         println(response.content.getClass())
         def jsonResponse = new groovy.json.JsonSlurper().parseText(response.content)
