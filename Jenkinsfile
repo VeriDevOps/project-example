@@ -48,6 +48,7 @@ pipeline {
                 script {
                     issueBodyClassificationResult = ArqanClassificationApi("$issueBody")
                     issueTitleClassificationResult = ArqanClassificationApi("$issueTitle")
+                    println(issueBodyClassificationResult)
                 }
             }
         }
