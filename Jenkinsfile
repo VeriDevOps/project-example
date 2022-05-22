@@ -43,8 +43,8 @@ pipeline {
         stage('Send request to ARQAN classification API') {
             steps {
                 script {
-                    final String responseBodyClassification = sh(script: "curl -X POST -H 'Content-Type: text/plain' --data \$'$issueBody' 51.178.12.108:8000/text", returnStdout: true).trim() ?: error("Issue body classification failed")
-                    final String responseTitleClassification = sh(script: "curl -X POST -H 'Content-Type: text/plain' --data \$'$issueTitle' 51.178.12.108:8000/text", returnStdout: true).trim() ?: error("Issue title classification failed")
+                    //final String responseBodyClassification = sh(script: "curl -X POST -H 'Content-Type: text/plain' --data \$'$issueBody' 51.178.12.108:8000/text", returnStdout: true).trim() ?: error("Issue body classification failed")
+                    //final String responseTitleClassification = sh(script: "curl -X POST -H 'Content-Type: text/plain' --data \$'$issueTitle' 51.178.12.108:8000/text", returnStdout: true).trim() ?: error("Issue title classification failed")
                     
 
                     def responseBody = httpRequest (consoleLogResponseBody: true,
@@ -55,6 +55,8 @@ pipeline {
 
                     println(responseBody.status + "\n" + response.content)
 
+                    def responseObject_body = readJSON text: responseBody.content
+
                     def responseTitle = httpRequest (consoleLogResponseBody: true,
                         contentType: 'text/plain',
                         httpMode: 'POST',
@@ -64,9 +66,8 @@ pipeline {
                     println(responseTitle.status)
                     println(responseTitle.content)
 
-                    def responseObject_body = readJSON text: responseBodyClassification
+                    def responseObject_title = readJSON text: responseTitle.content
                     println("here")
-                    def responseObject_title = readJSON text: responseTitleClassification
 
                     def security_text_title = "$responseObject_title.security_text"
                     def security_text_body = "$responseObject_body.security_text"
