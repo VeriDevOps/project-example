@@ -10,10 +10,8 @@ pipeline {
     GenericTrigger(
      genericVariables: [
       [key: 'action', value: '$.action', defaultValue: 'noAction'],
-      [key: 'issueUrl', value: '$.issue.url', defaultValue: 'noUrl']
+      [key: 'issueUrl', value: '$.issue.url', defaultValue: null ]
      ],
-
-     //causeString: "Triggered on $action $issueUrl",
 
      printContributedVariables: true,
      printPostContent: true,
@@ -26,7 +24,7 @@ pipeline {
       when {
         beforeAgent true
         expression {
-            issueUrl != 'noUrl' && action ==~ /(opened|reopened|edited)/
+            issueUrl && action ==~ /(opened|reopened|edited)/
         }
       }
       stages {
