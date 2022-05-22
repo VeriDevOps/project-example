@@ -13,7 +13,7 @@ pipeline {
       [key: 'issueUrl', value: '$.issue.url', defaultValue: null]
      ],
 
-     causeString: "Triggered on $action",
+     //causeString: "Triggered on $action",
 
      printContributedVariables: true,
      printPostContent: true,
