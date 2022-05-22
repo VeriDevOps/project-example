@@ -82,19 +82,18 @@ pipeline {
 }
 
 String ArqanClassificationApi (String textInput) {
-    def response
     warnError(message: "ARQAN Classification API was not able to proceed the request") {
-        response = httpRequest (consoleLogResponseBody: true,
+        def response = httpRequest (consoleLogResponseBody: true,
                             contentType: 'TEXT_PLAIN',
                             httpMode: 'POST',
                             requestBody: textInput,
                             url: "http://51.178.12.108:8000/text",
                             validResponseCodes: "100:399"
                         )
+        if (response.status >= 400) {
+            return null
+        }
+        jsonResponse = readJSON text: response.content
+        return "$jsonResponse.security_text"
     }
-    if (response.status >= 400) {
-        return null
-    }
-    jsonResponse = readJSON text: response.content
-    return "$jsonResponse.security_text"
 }
