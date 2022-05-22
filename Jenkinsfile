@@ -9,11 +9,11 @@ pipeline {
   triggers {
     GenericTrigger(
      genericVariables: [
-      [key: 'action', value: '$.action', defaultValue: null],
-      [key: 'issueUrl', value: '$.issue.url', defaultValue: null]
+      [key: 'action', value: '$.action', defaultValue: 'noAction'],
+      [key: 'issueUrl', value: '$.issue.url', defaultValue: 'notAnIssue']
      ],
 
-     //causeString: "Triggered on $action",
+     causeString: "Triggered on $action, $issueUrl",
 
      printContributedVariables: true,
      printPostContent: true,
