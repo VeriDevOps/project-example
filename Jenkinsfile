@@ -46,8 +46,23 @@ pipeline {
                     final String responseBodyClassification = sh(script: "curl -X POST -H 'Content-Type: text/plain' --data \$'$issueBody' 51.178.12.108:8000/text", returnStdout: true).trim() ?: error("Issue body classification failed")
                     final String responseTitleClassification = sh(script: "curl -X POST -H 'Content-Type: text/plain' --data \$'$issueTitle' 51.178.12.108:8000/text", returnStdout: true).trim() ?: error("Issue title classification failed")
                     
-                    println(responseBodyClassification)
-                    println(responseTitleClassification)
+
+                    def responseBody = httpRequest (consoleLogResponseBody: true,
+                        contentType: 'text/plain',
+                        httpMode: 'POST',
+                        requestBody: "$issueBody",
+                        url: "51.178.12.108:8000/text")
+
+                    println(responseBody.status + "\n" + response.content)
+
+                    def responseTitle = httpRequest (consoleLogResponseBody: true,
+                        contentType: 'text/plain',
+                        httpMode: 'POST',
+                        requestBody: "$issueTitle",
+                        url: "51.178.12.108:8000/text")
+
+                    println(responseTitle.status)
+                    println(responseTitle.content)
 
                     def responseObject_body = readJSON text: responseBodyClassification
                     println("here")
