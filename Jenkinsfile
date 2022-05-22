@@ -3,6 +3,9 @@ def String ISSUE_NON_SECURITY_LABEL = "NON-SECURITY"
 // def String ARQAN_CLASSIFICATION_API_ENDPOINT = "51.178.12.108:8000"
 def issueTitle
 def issueBody
+def issueTitleClassificationResult
+def issueBodyClassificationResult
+def issueLabel
 
 pipeline {
   agent any
@@ -20,7 +23,7 @@ pipeline {
     )
   }
   stages {
-    stage('Start workflow') {
+    stage('Jenkins Workflow 1') {
       when {
         beforeAgent true
         expression {
@@ -43,21 +46,29 @@ pipeline {
         stage('Send request to ARQAN classification API') {
             steps {
                 script {
-                    //final String responseBodyClassification = sh(script: "curl -X POST -H 'Content-Type: text/plain' --data \$'$issueBody' 51.178.12.108:8000/text", returnStdout: true).trim() ?: error("Issue body classification failed")
-                    //final String responseTitleClassification = sh(script: "curl -X POST -H 'Content-Type: text/plain' --data \$'$issueTitle' 51.178.12.108:8000/text", returnStdout: true).trim() ?: error("Issue title classification failed")
-                    
+                    issueBodyClassificationResult = ArqanClassificationApi("$issueBody")
+                    issueTitleClassificationResult = ArqanClassificationApi("$issueTitle")
+                }
+            }
+        }
+        stage('Determine label value') {
+            steps {
+                script {
+                    issueLabel = ISSUE_SECURITY_LABEL
 
-                    def responseBody = ArqanClassificationApi("$issueBody")
-                    def responseTitle = ArqanClassificationApi("$issueTody")
-                    def issueLabel = ISSUE_SECURITY_LABEL
-
-                    if (responseBody == null && responseTitle == null){
+                    if (issueBodyClassificationResult == null && issueTitleClassificationResult == null){
                         error("Issue title and Issue body were not processed successfully")
                     }
-                    else if (responseBody == [] && responseTitle == []){
+                    else if (issueBodyClassificationResult == [] && issueTitleClassificationResult == []){
                         issueLabel = ISSUE_NON_SECURITY_LABEL
                     }
                     println(issueLabel)
+                }
+            }
+        }
+        stage('Set label') {
+            steps {
+                script {
                     withCredentials([string(credentialsId: 'personal-token-github', variable: 'TOKEN')]) {
                         final String response_label = sh(script: "curl -X POST -H 'Accept: application/vnd.github.v3+json' -H \"Authorization: token $TOKEN\" https://api.github.com/repos/VeriDevOps/project-example/issues/2/labels -d '{\"labels\" : [\"$issueLabel\"]}'")
                         println(response_label)
