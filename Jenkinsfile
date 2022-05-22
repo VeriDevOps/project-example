@@ -24,7 +24,7 @@ pipeline {
   stages {
     stage('Start workflow') {
       when {
-        beforeAgent true
+        //beforeAgent true
         expression {
             "$issueUrl" && "$action" ==~ /(opened|reopened|edited)/
         }
