@@ -83,7 +83,7 @@ pipeline {
 
 String ArqanClassificationApi (String textInput) {
     def response
-    warnError {
+    warnError(message: "ARQAN Classification API was not able to proceed the request") {
         response = httpRequest (consoleLogResponseBody: true,
                             contentType: 'TEXT_PLAIN',
                             httpMode: 'POST',
