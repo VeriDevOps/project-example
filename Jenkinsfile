@@ -53,7 +53,7 @@ pipeline {
                         requestBody: "$issueBody",
                         url: "http://51.178.12.108:8000/text")
 
-                    println(responseBody.status + "\n" + response.content)
+                    println(responseBody.status + "\n" + responseBody.content)
 
                     def responseObject_body = readJSON text: responseBody.content
 
