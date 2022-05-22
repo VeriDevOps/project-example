@@ -30,6 +30,7 @@ pipeline {
       }
       stages {
         stage('Extract body and title from the issue') {
+            steps{
             script {
                 final String issueUrl = sh(script: "curl -s $issueUrl", returnStdout: true).trim()
                 def responseObject = readJSON text: issueUrl
@@ -38,8 +39,10 @@ pipeline {
                 println("issueTitle:  $issueTitle")
                 println("issueBody:  $issueBody")
             }
+            }
         }
         stage('Send request to ARQAN classification API') {
+            steps {
             script {
                 final String responseBodyClassification = sh(script: "curl -X POST -H 'Content-Type: text/plain' --data \$'$issue_body' 51.178.12.108:8000/text", returnStdout: true).trim() ?: error("Issue body classification failed")
                 final String responseTitleClassification = sh(script: "curl -X POST -H 'Content-Type: text/plain' --data \$'$issue_title' 51.178.12.108:8000/text", returnStdout: true).trim() ?: error("Issue title classification failed")
@@ -56,6 +59,7 @@ pipeline {
                 }
 
                 println(issue_label)
+            }
             }
         }
       }
