@@ -10,7 +10,7 @@ pipeline {
     GenericTrigger(
      genericVariables: [
       [key: 'action', value: '$.action', defaultValue: 'noAction'],
-      [key: 'issueUrl', value: '$.issue.url', defaultValue: 'notAnIssue']
+      [key: 'issueUrl', value: '$.issue.url', defaultValue: 'noUrl']
      ],
 
      //causeString: "Triggered on $action $issueUrl",
@@ -24,9 +24,9 @@ pipeline {
   stages {
     stage('Start workflow') {
       when {
-        //beforeAgent true
+        beforeAgent true
         expression {
-            "$issueUrl" && "$action" ==~ /(opened|reopened|edited)/
+            "$issueUrl" != 'noUrl' && "$action" ==~ /(opened|reopened|edited)/
         }
       }
       stages {
