@@ -9,7 +9,7 @@ pipeline {
   triggers {
     GenericTrigger(
      genericVariables: [
-      [key: 'action', value: '$.action'],
+      [key: 'action', value: '$.action', defaultValue: null],
       [key: 'issueUrl', value: '$.issue.url', defaultValue: null]
      ],
 
@@ -26,7 +26,7 @@ pipeline {
       when {
         beforeAgent true
         expression {
-            return "$issueUrl" && "$action" ==~ /(opened|reopened|edited)/
+            return ("$issueUrl" && "$action" ==~ /(opened|reopened|edited)/)
         }
       }
       stages {
