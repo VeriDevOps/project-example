@@ -48,7 +48,7 @@ pipeline {
                     
 
                     def responseBody = httpRequest (consoleLogResponseBody: true,
-                        contentType: 'text/plain',
+                        contentType: 'TEXT_PLAIN',
                         httpMode: 'POST',
                         requestBody: "$issueBody",
                         url: "51.178.12.108:8000/text")
@@ -58,7 +58,7 @@ pipeline {
                     def responseObject_body = readJSON text: responseBody.content
 
                     def responseTitle = httpRequest (consoleLogResponseBody: true,
-                        contentType: 'text/plain',
+                        contentType: 'TEXT_PLAIN',
                         httpMode: 'POST',
                         requestBody: "$issueTitle",
                         url: "51.178.12.108:8000/text")
