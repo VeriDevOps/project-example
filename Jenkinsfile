@@ -26,7 +26,7 @@ pipeline {
       when {
         beforeAgent true
         expression {
-            "$issueUrl" != 'noUrl' && "$action" ==~ /(opened|reopened|edited)/
+            issueUrl != 'noUrl' && action ==~ /(opened|reopened|edited)/
         }
       }
       stages {
@@ -67,4 +67,3 @@ pipeline {
     }
   }
 }
-
