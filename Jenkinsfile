@@ -13,7 +13,7 @@ pipeline {
       [key: 'issueUrl', value: '$.issue.url', defaultValue: 'notAnIssue']
      ],
 
-     causeString: "Triggered on $action, $issueUrl",
+     //causeString: "Triggered on $action $issueUrl",
 
      printContributedVariables: true,
      printPostContent: true,
@@ -26,7 +26,7 @@ pipeline {
       when {
         beforeAgent true
         expression {
-            return ("$issueUrl" && "$action" ==~ /(opened|reopened|edited)/)
+            "$issueUrl" && "$action" ==~ /(opened|reopened|edited)/
         }
       }
       stages {
