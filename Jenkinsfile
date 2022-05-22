@@ -98,8 +98,8 @@ String ArqanClassificationApi (String textInput) {
         }
         println(response.content)
         println(response.content.getClass())
-        jsonResponse = readJSON text: response.content
-        println(jsonResponse + "\n" + "$jsonResponse.security_text")
-        return $jsonResponse.security_text
+        def jsonResponse = new groovy.json.JsonSlurper().parseText(response.content)
+        println(jsonResponse + "\n" + jsonResponse["security_text"])
+        return jsonResponse["security_text"]
     }
 }
