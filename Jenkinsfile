@@ -51,7 +51,7 @@ pipeline {
                         contentType: 'TEXT_PLAIN',
                         httpMode: 'POST',
                         requestBody: "$issueBody",
-                        url: "51.178.12.108:8000/text")
+                        url: "http://51.178.12.108:8000/text")
 
                     println(responseBody.status + "\n" + response.content)
 
@@ -61,7 +61,7 @@ pipeline {
                         contentType: 'TEXT_PLAIN',
                         httpMode: 'POST',
                         requestBody: "$issueTitle",
-                        url: "51.178.12.108:8000/text")
+                        url: "http://51.178.12.108:8000/text")
 
                     println(responseTitle.status)
                     println(responseTitle.content)
