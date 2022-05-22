@@ -25,7 +25,7 @@ pipeline {
     stage('Start workflow') {
       when {
         expression {
-            issueUrl != null && action ==~ /(opened|reopened|edited)/
+            issueUrl && action ==~ /(opened|reopened|edited)/
         }
       }
       stages {
