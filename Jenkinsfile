@@ -82,19 +82,19 @@ pipeline {
 }
 
 String ArqanClassificationApi (String textInput) {
-    def response = httpRequest (consoleLogResponseBody: true,
-                        contentType: 'TEXT_PLAIN',
-                        httpMode: 'POST',
-                        requestBody: textInput,
-                        url: "http://51.178.12.108:8000/text",
-                        validResponseCodes: "100:599"
-                    )
-    
+    def response
+    warnError {
+        response = httpRequest (consoleLogResponseBody: true,
+                            contentType: 'TEXT_PLAIN',
+                            httpMode: 'POST',
+                            requestBody: textInput,
+                            url: "http://51.178.12.108:8000/text",
+                            validResponseCodes: "100:399"
+                        )
+    }
     if (response.status >= 400) {
-        warnError("The request could not be proceeded \n Error: \n + $response.content")
         return null
     }
-
     jsonResponse = readJSON text: response.content
     return "$jsonResponse.security_text"
 }
