@@ -92,9 +92,11 @@ String ArqanClassificationApi (String textInput) {
                             validResponseCodes: "100:399"
                         )
         if (response.status >= 400) {
+            println(response.status)
             return null
         }
         jsonResponse = readJSON text: response.content
+        println(jsonResponse + "\n" + "$jsonResponse.security_text")
         return "$jsonResponse.security_text"
     }
 }
