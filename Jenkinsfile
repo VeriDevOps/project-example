@@ -33,16 +33,16 @@ pipeline {
             script {
                 final String issueUrl = sh(script: "curl -s $issueUrl", returnStdout: true).trim()
                 def responseObject = readJSON text: issueUrl
-                issueTitle = "$responseObject.title" ?: error "Could not extract issue title"
-                issueBody = "$responseObject.body" ?: error "Could not extract issue body"
+                issueTitle = "$responseObject.title" ?: error("Could not extract issue title")
+                issueBody = "$responseObject.body" ?: error("Could not extract issue body")
                 println("issueTitle:  $issueTitle")
                 println("issueBody:  $issueBody")
             }
         }
         stage('Send request to ARQAN classification API') {
             script {
-                final String responseBodyClassification = sh(script: "curl -X POST -H 'Content-Type: text/plain' --data \$'$issue_body' 51.178.12.108:8000/text", returnStdout: true).trim() ?: error "Issue body classification failed"
-                final String responseTitleClassification = sh(script: "curl -X POST -H 'Content-Type: text/plain' --data \$'$issue_title' 51.178.12.108:8000/text", returnStdout: true).trim() ?: error "Issue title classification failed"
+                final String responseBodyClassification = sh(script: "curl -X POST -H 'Content-Type: text/plain' --data \$'$issue_body' 51.178.12.108:8000/text", returnStdout: true).trim() ?: error("Issue body classification failed")
+                final String responseTitleClassification = sh(script: "curl -X POST -H 'Content-Type: text/plain' --data \$'$issue_title' 51.178.12.108:8000/text", returnStdout: true).trim() ?: error("Issue title classification failed")
 
                 def responseObject_body = readJSON text: responseBodyClassification
                 def responseObject_title = readJSON text: responseTitleClassification
