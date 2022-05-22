@@ -91,7 +91,7 @@ String ArqanClassificationApi (String textInput) {
                     )
     
     if (response.status >= 400) {
-        throw new Exception("The request could not be proceeded \n Error: \n + $response.content")
+        catchError(message: "The request could not be proceeded \n Error: \n + $response.content")
         return null
     }
 
