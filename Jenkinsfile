@@ -96,9 +96,10 @@ String ArqanClassificationApi (String textInput) {
             println(response.content.getClass())
             return null
         }
+        println(response.content)
         println(response.content.getClass())
-        //jsonResponse = readJSON text: response.content
-        //println(jsonResponse + "\n" + "$jsonResponse.security_text")
-        return response.content["security_text"]
+        jsonResponse = readJSON text: response.content
+        println(jsonResponse + "\n" + "$jsonResponse.security_text")
+        return $jsonResponse.security_text
     }
 }
