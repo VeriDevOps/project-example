@@ -1,8 +1,8 @@
 def String ISSUE_SECURITY_LABEL = "SECURITY"
 def String ISSUE_NON_SECURITY_LABEL = "NON-SECURITY"
 // def String ARQAN_CLASSIFICATION_API_ENDPOINT = "51.178.12.108:8000"
-def issueTitle
-def issueBody
+def issueTitle = "Test issue"
+def issueBody = "Providing clear error messages: The content of error messages shown on the pages or special error pages should clearly state the reason why the error occurred and, if possible, actions the user can take to resolve the error.\nText quality: The quality of textual content with respect to spelling and grammar should be sufficient so as not to readability."
 def issueTitleClassificationResult
 def issueBodyClassificationResult
 def issueLabel
@@ -26,12 +26,20 @@ pipeline {
     stage('Jenkins Workflow 1') {
       when {
         beforeAgent true
-        expression {
-            issueUrl != 'noUrl' && action ==~ /(opened|reopened|edited)/
+        anyOf{
+            triggeredBy cause: "UserIdCause"
+            expression {
+                issueUrl != 'noUrl' && action ==~ /(opened|reopened|edited)/
+            }
         }
       }
       stages {
         stage('Extract body and title from the issue') {
+            when {
+                not {
+                    triggeredBy cause: "UserIdCause"
+                }
+            }
             steps{
                 script {
                     final String issueUrl = sh(script: "curl -s $issueUrl", returnStdout: true).trim()
@@ -91,7 +99,9 @@ String ArqanClassificationApi (String textInput) {
                             url: "http://51.178.12.108:8000/text",
                             validResponseCodes: "100:399"
                         )
-        if (response.status >= 400) {
+        println(response.getStatus())
+        println(response.getStatus().getClass())
+        if (response.getStatus() >= 400) {
             println(response.status)
             println(response.content.getClass())
             return null
@@ -101,12 +111,12 @@ String ArqanClassificationApi (String textInput) {
         println(string)
         println(string.getClass())
         def testResponse = new groovy.json.JsonSlurper().parseText(string)
-        println(testResponse + "\n" + testResponse["security_text"])
+        println(testResponse + "\n" + testResponse.security_text)
 
         println(response.content)
         println(response.content.getClass())
         def jsonResponse = new groovy.json.JsonSlurper().parseText(response.content)
-        println(jsonResponse + "\n" + jsonResponse["security_text"])
-        return jsonResponse["security_text"]
+        println(jsonResponse + "\n" + jsonResponse.security_text)
+        return jsonResponse.security_text
     }
 }
