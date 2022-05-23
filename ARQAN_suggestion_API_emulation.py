@@ -34,7 +34,7 @@ def main():
     data["result_stigs"] = result_stigs
     response._content = json.dumps(data).encode('UTF-8')
 
-    return response
+    print(response.text)
 
 if __name__ == "__main__":
     main()
