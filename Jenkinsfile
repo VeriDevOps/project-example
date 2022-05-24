@@ -31,12 +31,11 @@ pipeline {
     // the workflow is triggered on issue opening/closing/editing/reopening
      genericVariables: [
       [key: 'action', value: '$.action', defaultValue: 'noAction'],
-      [key: 'issue', value: '$.issue.url', defaultValue: 'noUrl']
+      [key: 'issueUrl', value: '$.issue.url', defaultValue: 'noUrl']
      ],
 
      printContributedVariables: true,
      printPostContent: true,
-
      silentResponse: false,
     )
   }
@@ -47,7 +46,7 @@ pipeline {
         anyOf{
             triggeredBy cause: 'UserIdCause'
             expression {
-                env.issue != 'noUrl' && env.action ==~ /(opened|reopened|edited)/
+                env.issueUrl != 'noUrl' && env.action ==~ /(opened|reopened|edited)/
             }
         }
       }
@@ -57,17 +56,17 @@ pipeline {
                 anyOf{
                     triggeredBy cause: 'UserIdCause'
                     expression {
-                        env.issue != 'noUrl' && env.action ==~ /(opened|reopened|edited)/
+                        env.issueUrl != 'noUrl' && env.action ==~ /(opened|reopened|edited)/
                     }
                 }
             }
             steps{
                 script {
-                    println("$issue")
-                    println(env.issue)
-                    println(issue)
-                    issueUrl = sh(script: "curl -s $issue", returnStdout: true).trim()
-                    def responseObject = readJSON text: issueUrl
+                    println("$issueUrl")
+                    println(env.issueUrl)
+                    println(issueUrl)
+                    issue = sh(script: "curl -s $issue", returnStdout: true).trim()
+                    def responseObject = readJSON text: issue
                     issueTitle = "$responseObject.title" ?: error('Could not extract issue title')
                     issueBody = "$responseObject.body" ?: error('Could not extract issue body')
                 }
@@ -125,7 +124,7 @@ pipeline {
                 anyOf{
                     triggeredBy cause: 'UserIdCause'
                     expression {
-                        env.issue != 'noUrl' && env.action ==~ /(opened|edited)/
+                        env.issueUrl != 'noUrl' && env.action ==~ /(opened|edited)/
                     }
                 }
             }
@@ -200,7 +199,7 @@ pipeline {
                 anyOf{
                     triggeredBy cause: 'UserIdCause'
                     expression {
-                        env.issue != 'noUrl' && env.action ==~ /(opened|edited)/
+                        env.issueUrl != 'noUrl' && env.action ==~ /(opened|edited)/
                     }
                 }
             }
