@@ -63,6 +63,8 @@ pipeline {
             }
             steps{
                 script {
+                    println("$issueUrl")
+                    println(issueUrl)
                     issueUrl = sh(script: "curl -s $issueUrl", returnStdout: true).trim()
                     def responseObject = readJSON text: issueUrl
                     issueTitle = "$responseObject.title" ?: error('Could not extract issue title')
