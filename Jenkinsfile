@@ -1,11 +1,28 @@
-def String ISSUE_SECURITY_LABEL = "SECURITY"
-def String ISSUE_NON_SECURITY_LABEL = "NON-SECURITY"
-// def String ARQAN_CLASSIFICATION_API_ENDPOINT = "51.178.12.108:8000"
-def issueTitle = "Test issue"
-def issueBody = "Providing clear error messages: The content of error messages shown on the pages or special error pages should clearly state the reason why the error occurred and, if possible, actions the user can take to resolve the error.\nText quality: The quality of textual content with respect to spelling and grammar should be sufficient so as not to readability."
+ISSUE_SECURITY_LABEL = 'SECURITY'
+ISSUE_NON_SECURITY_LABEL = 'NON-SECURITY'
+SEND_STIG_SUGGESTIONS_TO_RQCODE = true
+ARQAN_CLASSIFICATION_API_ENDPOINT = "http://51.178.12.108:8000"
+VDO_PATTERNS_REPO = [owner: "anaumchev", name: "VDO-Patterns", url: "https://github.com/anaumchev/VDO-Patterns.git"]
+
+//General variables
+def issueUrl = ""
+def issueTitle = ""
+def issueBody = ""
+
+//Workflow 1 related variables
 def issueTitleClassificationResult
 def issueBodyClassificationResult
 def issueLabel
+
+//Workflow 2 related variables
+def stigList = []
+def commentStigs = ''
+
+//Workflow 3 related variables
+def testList = []
+def commentTests = ''
+def missingTestList = []
+
 
 pipeline {
   agent any
@@ -27,7 +44,7 @@ pipeline {
       when {
         beforeAgent true
         anyOf{
-            triggeredBy cause: "UserIdCause"
+            triggeredBy cause: 'UserIdCause'
             expression {
                 issueUrl != 'noUrl' && action ==~ /(opened|reopened|edited)/
             }
@@ -36,18 +53,19 @@ pipeline {
       stages {
         stage('Extract body and title from the issue') {
             when {
-                not {
-                    triggeredBy cause: "UserIdCause"
+                anyOf{
+                    triggeredBy cause: 'UserIdCause'
+                    expression {
+                        issueUrl != 'noUrl' && action ==~ /(opened|reopened|edited)/
+                    }
                 }
             }
             steps{
                 script {
-                    final String issueUrl = sh(script: "curl -s $issueUrl", returnStdout: true).trim()
+                    issueUrl = sh(script: "curl -s $issueUrl", returnStdout: true).trim()
                     def responseObject = readJSON text: issueUrl
-                    issueTitle = "$responseObject.title" ?: error("Could not extract issue title")
-                    issueBody = "$responseObject.body" ?: error("Could not extract issue body")
-                    println("issueTitle:  $issueTitle")
-                    println("issueBody:  $issueBody")
+                    issueTitle = "$responseObject.title" ?: error('Could not extract issue title')
+                    issueBody = "$responseObject.body" ?: error('Could not extract issue body')
                 }
             }
         }
@@ -56,7 +74,6 @@ pipeline {
                 script {
                     issueBodyClassificationResult = ArqanClassificationApi("$issueBody")
                     issueTitleClassificationResult = ArqanClassificationApi("$issueTitle")
-                    println(issueBodyClassificationResult)
                 }
             }
         }
@@ -64,9 +81,8 @@ pipeline {
             steps {
                 script {
                     issueLabel = ISSUE_SECURITY_LABEL
-
                     if (issueBodyClassificationResult == null && issueTitleClassificationResult == null){
-                        error("Issue title and Issue body were not processed successfully")
+                        error('Issue title and Issue body were not processed successfully')
                     }
                     else if (issueBodyClassificationResult == [] && issueTitleClassificationResult == []){
                         issueLabel = ISSUE_NON_SECURITY_LABEL
@@ -79,7 +95,7 @@ pipeline {
             steps {
                 script {
                     withCredentials([string(credentialsId: 'personal-token-github', variable: 'TOKEN')]) {
-                        final String response_label = sh(script: "curl -X POST -H 'Accept: application/vnd.github.v3+json' -H \"Authorization: token $TOKEN\" https://api.github.com/repos/VeriDevOps/project-example/issues/2/labels -d '{\"labels\" : [\"$issueLabel\"]}'")
+                        final String response_label = sh(script: "curl -X POST -H 'Accept: application/vnd.github.v3+json' -H \"Authorization: token $TOKEN\" $issueUrl/labels -d '{\"labels\" : [\"$issueLabel\"]}'")
                         println(response_label)
                     }
                 }
@@ -87,36 +103,211 @@ pipeline {
         }
       }
     }
+    
+    stage ('Jenkins Workflow 2') {
+        when {
+            allOf{
+                // if the issue is not related to security
+                // STIGs and tests suggestion stages should be skipped
+                expression {
+                    issueLabel == ISSUE_SECURITY_LABEL
+                }
+                anyOf{
+                    triggeredBy cause: 'UserIdCause'
+                    expression {
+                        issueUrl != 'noUrl' && action ==~ /(opened|edited)/
+                    }
+                }
+            }
+        }
+        stages {
+            stage('Initialize docker'){
+                steps{
+                    script{
+                        def dockerHome = tool 'myDocker'
+                        env.PATH = "${dockerHome}/bin:/usr/bin:${env.PATH}"
+                    }
+                }
+            }
+            stage ('Get STIGs suggestions for the issue') {
+                agent {
+                    docker {
+                    image 'python:3'
+                    reuseNode true
+                    }
+                }
+                steps{
+                    script {
+                        sh 'pip install -r requirements.txt'
+                        def stigListJsonString = sh (script: 'python ARQAN_suggestion_API_emulation.py', returnStdout: true).trim()
+                        stigList = new groovy.json.JsonSlurper().parseText(stigListJsonString).result_stigs
+                    }
+                }
+            }
+            stage ('Generate a comment with STIGs suggestion for the issue') {
+                steps{
+                    script {
+                        if (stigList.size()>0) {
+                            commentStigs = "Suggested STIGs:\\n"
+                            def matcher = /https:\/\/www.stigviewer.com\/stig\/(.*)\/finding\/(.*)/                        
+                            for (link in stigList) {
+                                def stigName = (link =~ matcher)[0][-1]
+                                commentStigs = commentStigs + """\\r\\n- [$stigName]($link)"""
+                            }
+                        }
+                        else {
+                            commentStigs = 'No STIGs found for the issue'
+                        }
+                    }
+                }
+            }
+            stage ('Post a comment with STIGs suggestion for the issue') {
+                steps{
+                    script {
+                        withCredentials([string(credentialsId: 'personal-token-github', variable: 'TOKEN')]) {
+                            httpRequest (consoleLogResponseBody: true,
+                                customHeaders: [[name: 'Accept', value: 'application/vnd.github.v3+json'],
+                                                [name: 'Authorization', value: "token $TOKEN", maskValue: true]],
+                                httpMode: 'POST',
+                                requestBody: """{"body": "$commentStigs"}""",
+                                url: "$issueUrl/comments",
+                                validResponseCodes: '201'
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+    stage ('Jenkins Workflow 3') {
+        when {
+            allOf{
+                // if the issue is not related to security
+                // STIGs and tests suggestion stages should be skipped
+                expression {
+                    stigList.size()>0
+                }
+                anyOf{
+                    triggeredBy cause: 'UserIdCause'
+                    expression {
+                        issueUrl != 'noUrl' && action ==~ /(opened|edited)/
+                    }
+                }
+            }
+        }
+        stages {
+            stage('Initialize - clone VDO-patterns repo'){
+                steps{
+                    script{
+                        git url: "$VDO_PATTERNS_REPO.url"
+                    }
+                }
+            }
+            stage('Get tests suggestion for the issue') {
+                steps{
+                    script {
+                        sh "ls"
+                        dir ('src/rqcode/stigs') {
+                            def matcher = /https:\/\/www.stigviewer.com\/stig\/(.*)\/finding\/(.*)/
+                            sh "ls"
+                            sh "pwd"
+                            for (link in stigList) {
+                                def stigName = (link =~ matcher)[0][-1].replace('-','_')
+                                println(stigName)
+                                def test = sh(script: "find . -type d -name $stigName", returnStdout: true).trim()
+                                println(test)
+                                if (test && test ==~ /\.\/.*\/V_[0-9]+/) {
+                                    testList.add(test.substring(2))
+                                }
+                                else {
+                                    missingTestList.add([link: "$link", name: "$stigName"])
+                                }
+                            }
+                        }
+                        print(missingTestList)
+                        print(testList)
+                    }
+                }
+            }
+            stage('Generate a comment with tests suggestion for the issue') {
+                steps{
+                    script {
+                        if (testList.size()>0) {
+                            commentTests = "Suggested tests from VDO-Patterns:\\n"
+                            def matcher = /(.*)\/(.*)/                     
+                            for (test in testList) {
+                                def testName = (test =~ matcher)[0][-1]
+                                def testLink = "https://github.com/$VDO_PATTERNS_REPO.owner/$VDO_PATTERNS_REPO.name/tree/master/src/rqcode/stigs/" + test
+                                commentTests = commentTests + """\\r\\n- [$testName]($testLink)"""
+                            }
+                        }
+                        else {
+                            commentTests = 'No RQCODE tests found for the issue'
+                        }
+                    }
+                }
+            }
+            stage ('Post a comment with RQCODE tests suggestion for the issue') {
+                steps{
+                    script {
+                        withCredentials([string(credentialsId: 'personal-token-github', variable: 'TOKEN')]) {
+                            httpRequest (consoleLogResponseBody: true,
+                                customHeaders: [[name: 'Accept', value: 'application/vnd.github.v3+json'],
+                                                [name: 'Authorization', value: "token $TOKEN", maskValue: true]],
+                                httpMode: 'POST',
+                                requestBody: """{"body": "$commentTests"}""",
+                                url: "$issueUrl/comments",
+                                validResponseCodes: '201'
+                            )
+                        }
+                    }
+                }
+            }
+            stage ('Post an issue with tests implementation suggestions for RQCODE') {
+                when {
+                    expression {
+                        SEND_STIG_SUGGESTIONS_TO_RQCODE
+                    }
+                }
+                steps{
+                    script {
+                        for (test in missingTestList) {
+                            withCredentials([string(credentialsId: 'personal-token-github', variable: 'TOKEN')]) {
+                                httpRequest (consoleLogResponseBody: true,
+                                    customHeaders: [[name: 'Accept', value: 'application/vnd.github.v3+json'],
+                                                    [name: 'Authorization', value: "token $TOKEN", maskValue: true]],
+                                    httpMode: 'POST',
+                                    requestBody: """{"title":"STIG implementation ($test.name)","body":"STIG [$test.name]($test.link) is not implemented yet","assignees":["$VDO_PATTERNS_REPO.owner"],"labels":["STIG suggestion"]}""",
+                                    url: "https://api.github.com/repos/$VDO_PATTERNS_REPO.owner/$VDO_PATTERNS_REPO.name/issues",
+                                    validResponseCodes: '201'
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
   }
 }
 
 String ArqanClassificationApi (String textInput) {
-    warnError(message: "ARQAN Classification API was not able to proceed the request") {
-        def response = httpRequest (consoleLogResponseBody: true,
+    def response
+    try {
+        response = httpRequest (consoleLogResponseBody: true,
                             contentType: 'TEXT_PLAIN',
                             httpMode: 'POST',
                             requestBody: textInput,
-                            url: "http://51.178.12.108:8000/text",
-                            validResponseCodes: "100:399"
+                            url: "$ARQAN_CLASSIFICATION_API_ENDPOINT/text",
+                            validResponseCodes: '200'
                         )
-        println(response.getStatus())
-        println(response.getStatus().getClass())
-        if (response.getStatus() >= 400) {
-            println(response.status)
-            println(response.content.getClass())
-            return null
-        }
-        
-        def string = '{"security_text":[]}'
-        println(string)
-        println(string.getClass())
-        def testResponse = new groovy.json.JsonSlurper().parseText(string)
-        println(testResponse + "\n" + testResponse.security_text)
-
-        println(response.content)
-        println(response.content.getClass())
-        def jsonResponse = new groovy.json.JsonSlurper().parseText(response.content)
-        println(jsonResponse + "\n" + jsonResponse.security_text)
-        return jsonResponse.security_text
     }
+    catch (err) {
+        echo err.getMessage()
+        return null
+    }
+
+    def jsonResponse = new groovy.json.JsonSlurper().parseText(response.getContent())
+    println(jsonResponse.security_text)
+    return jsonResponse.security_text
 }
