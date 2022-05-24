@@ -28,6 +28,7 @@ pipeline {
   agent any
   triggers {
     GenericTrigger(
+    // the workflow is triggered on issue opening/closing/editing/reopening
      genericVariables: [
       [key: 'action', value: '$.action', defaultValue: 'noAction'],
       [key: 'issueUrl', value: '$.issue.url', defaultValue: 'noUrl']
