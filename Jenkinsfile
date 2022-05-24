@@ -31,7 +31,7 @@ pipeline {
     // the workflow is triggered on issue opening/closing/editing/reopening
      genericVariables: [
       [key: 'action', value: '$.action', defaultValue: 'noAction'],
-      [key: 'issueUrl', value: '$.issue.url', defaultValue: 'noUrl']
+      [key: 'issue', value: '$.issue.url', defaultValue: 'noUrl']
      ],
 
      printContributedVariables: true,
@@ -47,7 +47,7 @@ pipeline {
         anyOf{
             triggeredBy cause: 'UserIdCause'
             expression {
-                issueUrl != 'noUrl' && action ==~ /(opened|reopened|edited)/
+                issue != 'noUrl' && action ==~ /(opened|reopened|edited)/
             }
         }
       }
@@ -57,15 +57,15 @@ pipeline {
                 anyOf{
                     triggeredBy cause: 'UserIdCause'
                     expression {
-                        issueUrl != 'noUrl' && action ==~ /(opened|reopened|edited)/
+                        issue != 'noUrl' && action ==~ /(opened|reopened|edited)/
                     }
                 }
             }
             steps{
                 script {
-                    println("$issueUrl")
-                    println(issueUrl)
-                    issueUrl = sh(script: "curl -s $issueUrl", returnStdout: true).trim()
+                    println("$issue")
+                    println(issue)
+                    issueUrl = sh(script: "curl -s $issue", returnStdout: true).trim()
                     def responseObject = readJSON text: issueUrl
                     issueTitle = "$responseObject.title" ?: error('Could not extract issue title')
                     issueBody = "$responseObject.body" ?: error('Could not extract issue body')
@@ -118,7 +118,7 @@ pipeline {
                 anyOf{
                     triggeredBy cause: 'UserIdCause'
                     expression {
-                        issueUrl != 'noUrl' && action ==~ /(opened|edited)/
+                        issue != 'noUrl' && action ==~ /(opened|edited)/
                     }
                 }
             }
@@ -193,7 +193,7 @@ pipeline {
                 anyOf{
                     triggeredBy cause: 'UserIdCause'
                     expression {
-                        issueUrl != 'noUrl' && action ==~ /(opened|edited)/
+                        issue != 'noUrl' && action ==~ /(opened|edited)/
                     }
                 }
             }
