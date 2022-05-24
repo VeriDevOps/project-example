@@ -99,8 +99,14 @@ pipeline {
             steps {
                 script {
                     withCredentials([string(credentialsId: 'personal-token-github', variable: 'TOKEN')]) {
-                        final String response_label = sh(script: "curl -X POST -H 'Accept: application/vnd.github.v3+json' -H \"Authorization: token $TOKEN\" $issueUrl/labels -d '{\"labels\" : [\"$issueLabel\"]}'")
-                        println(response_label)
+                        httpRequest (consoleLogResponseBody: true,
+                            customHeaders: [[name: 'Accept', value: 'application/vnd.github.v3+json'],
+                                            [name: 'Authorization', value: "token $TOKEN", maskValue: true]],
+                            httpMode: 'POST',
+                            requestBody: """{"labels": ["$issueLabel"]}""",
+                            url: "$issueUrl/labels",
+                            validResponseCodes: '201'
+                        )
                     }
                 }
             }
