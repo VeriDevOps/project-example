@@ -47,7 +47,7 @@ pipeline {
         anyOf{
             triggeredBy cause: 'UserIdCause'
             expression {
-                issue != 'noUrl' && action ==~ /(opened|reopened|edited)/
+                env.issue != 'noUrl' && env.action ==~ /(opened|reopened|edited)/
             }
         }
       }
@@ -57,13 +57,14 @@ pipeline {
                 anyOf{
                     triggeredBy cause: 'UserIdCause'
                     expression {
-                        issue != 'noUrl' && action ==~ /(opened|reopened|edited)/
+                        env.issue != 'noUrl' && env.action ==~ /(opened|reopened|edited)/
                     }
                 }
             }
             steps{
                 script {
                     println("$issue")
+                    println(env.issue)
                     println(issue)
                     issueUrl = sh(script: "curl -s $issue", returnStdout: true).trim()
                     def responseObject = readJSON text: issueUrl
@@ -118,7 +119,7 @@ pipeline {
                 anyOf{
                     triggeredBy cause: 'UserIdCause'
                     expression {
-                        issue != 'noUrl' && action ==~ /(opened|edited)/
+                        env.issue != 'noUrl' && env.action ==~ /(opened|edited)/
                     }
                 }
             }
@@ -193,7 +194,7 @@ pipeline {
                 anyOf{
                     triggeredBy cause: 'UserIdCause'
                     expression {
-                        issue != 'noUrl' && action ==~ /(opened|edited)/
+                        env.issue != 'noUrl' && env.action ==~ /(opened|edited)/
                     }
                 }
             }
