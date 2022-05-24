@@ -102,7 +102,7 @@ pipeline {
                             httpMode: 'POST',
                             requestBody: """{"labels": ["$issueLabel"]}""",
                             url: "$issueUrl/labels",
-                            validResponseCodes: '201'
+                            validResponseCodes: '200'
                         )
                     }
                 }
